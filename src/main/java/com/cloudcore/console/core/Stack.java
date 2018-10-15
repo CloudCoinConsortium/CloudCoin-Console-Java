@@ -3,6 +3,8 @@ package com.cloudcore.console.core;
 import com.google.gson.annotations.Expose;
 import com.google.gson.annotations.SerializedName;
 
+import java.util.ArrayList;
+
 public class Stack {
 
 
@@ -22,5 +24,9 @@ public class Stack {
 
     public Stack(CloudCoin[] coins) {
         cc = coins;
+    }
+
+    public Stack(ArrayList<CloudCoin> coins) {
+        cc = coins.toArray(new CloudCoin[0]);
     }
 }

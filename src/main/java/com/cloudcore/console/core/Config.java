@@ -20,6 +20,8 @@ public class Config {
     public static final String TAG_LOST = "Lost";
 
     public static final String TAG_LOGS = "Logs";
+    public static final String TAG_RECEIPTS = "Receipts";
+    public static final String TAG_TRASH = "Trash";
     public static final String TAG_TEMPLATES = "Templates";
 
 

@@ -23,7 +23,25 @@ public class FileSystem {
     /* Fields */
 
     public static String RootPath = "C:\\MyFiles\\work\\CloudCoin\\Dev\\Console-Java\\"; // TODO: NEVER UPLOAD THIS TO GITHUB!
+    //public static String RootPath = "C:\\MyFiles\\work\\CloudCoin\\Reference-Projects\\Founders-Release-v2.0.0.4-27072018"; // TODO: NEVER UPLOAD THIS TO GITHUB!
     //public static String RootPath = Paths.get("").toAbsolutePath().toString() + File.separator;
+
+
+    public static String DetectedPath = File.separator + Config.TAG_DETECTED + File.separator;
+    public static String ImportPath = File.separator + Config.TAG_IMPORT + File.separator;
+    public static String SuspectPath = File.separator + Config.TAG_SUSPECT + File.separator;
+    public static String ExportPath = File.separator + Config.TAG_EXPORT + File.separator;
+
+    public static String BankPath = File.separator + Config.TAG_BANK + File.separator;
+    public static String FrackedPath = File.separator + Config.TAG_FRACKED + File.separator;
+    public static String CounterfeitPath = File.separator + Config.TAG_COUNTERFEIT + File.separator;
+    public static String LostPath = File.separator + Config.TAG_LOST + File.separator;
+
+    public static String ReceiptsPath = File.separator + Config.TAG_RECEIPTS + File.separator;
+    public static String TrashPath = File.separator + Config.TAG_TRASH + File.separator;
+
+    public static String LogsPath = File.separator + Config.TAG_LOGS + File.separator;
+
 
     public static String DetectedFolder = RootPath + Config.TAG_DETECTED + File.separator;
     public static String ExportFolder = RootPath + Config.TAG_EXPORT + File.separator;
@@ -176,6 +194,7 @@ public class FileSystem {
         String fileName = FileUtils.ensureFilenameUnique(CoinUtils.generateFilename(coin), extension, targetFolder);
 
         try {
+            System.out.println("Moved " + sourceFolder + coin.currentFilename + " to " + targetFolder + fileName);
             Files.move(Paths.get(sourceFolder + coin.currentFilename), Paths.get(targetFolder + fileName),
                     StandardCopyOption.REPLACE_EXISTING);
         } catch (Exception e) {
@@ -217,12 +236,37 @@ public class FileSystem {
      * @param coins    the ArrayList of CloudCoins.
      * @param filePath the absolute filepath of the CloudCoin file, without the extension.
      */
-    public static void saveCoinsSingleStack(ArrayList<CloudCoin> coins, String filePath) {
+    public static String saveCoinsSingleStack(ArrayList<CloudCoin> coins, String filePath) {
         Gson gson = Utils.createGson();
         try {
             Stack stack = new Stack(coins.toArray(new CloudCoin[0]));
-            Files.write(Paths.get(filePath), gson.toJson(stack).getBytes(), StandardOpenOption.CREATE_NEW);
+            String json = gson.toJson(stack);
+            System.out.println("saved coin " + filePath);
+            Files.write(Paths.get(filePath), json.getBytes(), StandardOpenOption.CREATE_NEW);
+            return json;
         } catch (IOException e) {
+            System.out.println(e.getLocalizedMessage());
+            e.printStackTrace();
+            return null;
+        }
+    }
+
+    public static void moveFile(String fileName, String sourceFolder, String targetFolder, boolean replaceCoins) {
+        String newFilename = targetFolder + fileName;
+        if (!replaceCoins) {
+            String[] suspectFileNames = FileUtils.selectFileNamesInFolder(targetFolder);
+            for (String suspect : suspectFileNames) {
+                System.out.println(suspect + " == " + newFilename);
+                if (suspect.equals(fileName)) {
+                    newFilename = FileUtils.ensureFilenameUnique(fileName, ".stack", targetFolder);
+                    break;
+                }
+            }
+        }
+
+        try {
+            Files.move(Paths.get(sourceFolder + fileName), Paths.get(targetFolder + newFilename), StandardCopyOption.REPLACE_EXISTING);
+        } catch (Exception e) {
             System.out.println(e.getLocalizedMessage());
             e.printStackTrace();
         }

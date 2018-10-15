@@ -1,5 +1,7 @@
 package com.cloudcore.console.utils;
 
+import com.cloudcore.console.core.FileSystem;
+
 import java.io.IOException;
 import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
@@ -16,21 +18,19 @@ public class SimpleLogger {
 
     /* Fields */
 
-    private DateTimeFormatter logTimestampFormat = DateTimeFormatter.ofPattern("yyyyMMddHHmmssSSS");
+    private static DateTimeFormatter logTimestampFormat = DateTimeFormatter.ofPattern("yyyyMMddHHmmssSSS");
     private StringBuilder logsRecord;
 
-    private String fullFilePath;
+    private static String fullFilePath;
 
 
     /* Constructor */
 
     /**
      * Initialize a new instance of SimpleLogger class.
-     *
-     * @param fullFilePath the absolute filepath of the log.
      */
-    public SimpleLogger(String fullFilePath) {
-        initialize(fullFilePath);
+    public SimpleLogger() {
+        initialize(FileSystem.LogsFolder);
     }
 
 
@@ -44,6 +44,14 @@ public class SimpleLogger {
     private void initialize(String fullFilePath) {
         this.fullFilePath = fullFilePath;
         logsRecord = new StringBuilder();
+    }
+
+    public void Log(String text) {
+        writeFormattedLog(LogLevel.INFO, text);
+    }
+
+    public void LogGoodCall(String text) {
+        writeFormattedLog(LogLevel.GOODCALL, text);
     }
 
     /**
@@ -72,7 +80,7 @@ public class SimpleLogger {
      *
      * @param text the text to append to the log.
      */
-    public void Info(String text) {
+    public static void Info(String text) {
         writeFormattedLog(INFO, text);
     }
 
@@ -88,7 +96,7 @@ public class SimpleLogger {
     /// </summary>
     /// <param name="level">Log level</param>
     /// <param name="text">Log message</param>
-    private void writeFormattedLog(LogLevel level, String text) {
+    private static void writeFormattedLog(LogLevel level, String text) {
         String pretext;
         switch (level) {
             case TRACE:
@@ -122,7 +130,7 @@ public class SimpleLogger {
      *
      * @param text formatted log message.
      */
-    private void writeLine(String text) {
+    private static void writeLine(String text) {
         writeLine(text, false);
     }
 
@@ -132,11 +140,19 @@ public class SimpleLogger {
      * @param text   formatted log message.
      * @param append true to append to an existing file, false to overwrite the file.
      */
-    private void writeLine(String text, boolean append) {
+    private static void writeLine(String text, boolean append) {
         try {
+            String filepath = fullFilePath + LocalDateTime.now().format(DateTimeFormatter.ofPattern("yyyyMMddHHmmssSSS")).toLowerCase();
+            String finalFilepath = filepath;
+            int counter = 1;
+            while (Files.exists(Paths.get(finalFilepath + ".log"))) {
+                finalFilepath = filepath + '.' + counter++;
+            }
+            finalFilepath += ".log";
+
             StandardOpenOption option = (append) ? StandardOpenOption.APPEND : StandardOpenOption.TRUNCATE_EXISTING;
 
-            Path path = Paths.get(fullFilePath);
+            Path path = Paths.get(finalFilepath);
             if (!Files.exists(path)) {
                 Files.createDirectories(path.getParent());
                 Files.createFile(path);
@@ -152,6 +168,9 @@ public class SimpleLogger {
      * Supported log levels.
      */
     enum LogLevel {
+        BADLOGIN,
+        BADCALL,
+        GOODCALL,
         TRACE,
         INFO,
         DEBUG,

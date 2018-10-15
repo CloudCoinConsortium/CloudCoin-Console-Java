@@ -1,5 +1,6 @@
 package com.cloudcore.console.utils;
 
+import com.cloudcore.console.core.Config;
 import com.google.gson.Gson;
 import com.google.gson.GsonBuilder;
 
@@ -8,9 +9,20 @@ import java.io.IOException;
 import java.io.InputStreamReader;
 import java.net.HttpURLConnection;
 import java.net.URL;
+import java.text.SimpleDateFormat;
+import java.util.Date;
 
 public class Utils {
 
+
+    /* Fields */
+
+    public static SimpleDateFormat dateFormat = new SimpleDateFormat("yyyy-MM-dd'T'kk:mm:ss.SSSSSSSXXX");
+
+    public static SimpleDateFormat simpleDateFormat = new SimpleDateFormat("yyyy-MM-dd kk:mm:ss");
+
+
+    /* Methods */
 
     /**
      * Creates a Gson object, a JSON parser for converting JSON Strings and objects.
@@ -28,12 +40,21 @@ public class Utils {
         return pown.length() - pown.replace(Character.toString(character), "").length();
     }
 
+    public static String getDate() {
+        return dateFormat.format(new Date());
+    }
+
+    public static String getSimpleDate() {
+        return simpleDateFormat.format(new Date());
+    }
+
     public static String getHtmlFromURL(String urlAddress) {
         String data = "";
 
         try {
             URL url = new URL(urlAddress);
             HttpURLConnection connect = (HttpURLConnection) url.openConnection();
+            connect.setConnectTimeout(Config.milliSecondsToTimeOutDetect);
             if (200 != connect.getResponseCode())
                 return data;
 

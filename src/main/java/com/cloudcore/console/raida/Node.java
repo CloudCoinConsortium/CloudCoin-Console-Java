@@ -14,6 +14,11 @@ import static org.asynchttpclient.Dsl.asyncHttpClient;
  */
 public class Node {
 
+    public enum NodeStatus {
+        Ready,
+        NotReady,
+    }
+
 
     /* Fields */
 
@@ -34,11 +39,15 @@ public class Node {
     public String ticket = "";
     public boolean hasTicket;
 
+    public NodeStatus RAIDANodeStatus = NodeStatus.NotReady;
+
+    public long responseTime;
+
     //Constructor
     public Node(int NodeNumber) {
         this.nodeNumber = NodeNumber;
         fullUrl = GetFullURL();
-        System.out.println(fullUrl);
+        //System.out.println(fullUrl);
 
         client = asyncHttpClient();
         gson = Utils.createGson();
@@ -84,10 +93,50 @@ public class Node {
         return "https://raida" + (nodeNumber - 1) + ".cloudcoin.global/service/";
     }
 
+
+
+    public CompletableFuture<Response> echo() {
+        return CompletableFuture.supplyAsync(() -> {
+            Response echoResponse = new Response();
+            echoResponse.fullRequest = this.fullUrl + "echo";
+            long before = System.currentTimeMillis();
+            failsEcho = true;
+            try {
+                echoResponse.fullResponse = Utils.getHtmlFromURL(echoResponse.fullRequest);
+                //System.out.println("Echo From Node - " + nodeNumber + ". " + echoResponse.fullResponse);
+                //System.out.println("Echo URL - "+ fullUrl);
+                if (echoResponse.fullResponse.contains("ready")) {
+                    echoResponse.success = true;
+                    echoResponse.outcome = "ready";
+                    this.RAIDANodeStatus = NodeStatus.Ready;
+                    failsEcho = false;
+                } else {
+                    this.RAIDANodeStatus = NodeStatus.NotReady;
+                    echoResponse.success = false;
+                    echoResponse.outcome = "error";
+                    failsEcho = true;
+                }
+            } catch (Exception ex) {
+                echoResponse.outcome = "error";
+                echoResponse.success = false;
+                this.RAIDANodeStatus = NodeStatus.NotReady;
+                failsEcho = true;
+                if (ex.getMessage() != null)
+                    echoResponse.fullResponse = ex.getMessage();
+                //System.out.println("Error---" + ex.getMessage());
+            }
+            long after = System.currentTimeMillis();
+            responseTime = after - before;
+            echoResponse.milliseconds = (int) responseTime;
+            //System.out.println("Echo Complete-Node No.-" + NodeNumber + ".Status-" + RAIDANodeStatus);
+            return echoResponse;
+        });
+    }
+
     //int[] nn, int[] sn, String[] an, String[] pan, int[] d, int timeout
     public CompletableFuture<MultiDetectResponse> MultiDetect() {
         /*PREPARE REQUEST*/
-        RAIDA raida = RAIDA.activeRAIDA;
+        RAIDA raida = RAIDA.getInstance();
         int[] nn = raida.multiRequest.nn;
         int[] sn = raida.multiRequest.sn;
         String[] an = raida.multiRequest.an[nodeNumber - 1];
@@ -109,8 +158,7 @@ public class Node {
             formParams.add(new Param("nns[]", Integer.toString(nn[i])));
             formParams.add(new Param("sns[]", Integer.toString(sn[i])));
             formParams.add(new Param("ans[]", an[i]));
-            //formParams.add(new Param("pans[]", pan[i]));
-            formParams.add(new Param("pans[]", an[i])); // TODO: NEVER UPLOAD THIS TO GITHUB!!! TEST ONLY.
+            formParams.add(new Param("pans[]", pan[i]));
             formParams.add(new Param("denomination[]", Integer.toString(d[i])));
             //System.out.println("url is " + this.fullUrl + "detect?nns[]=" + nn[i] + "&sns[]=" + sn[i] + "&ans[]=" + an[i] + "&pans[]=" + pan[i] + "&denomination[]=" + d[i]);
             response[i].fullRequest = this.fullUrl + "detect?nns[]=" + nn[i] + "&sns[]=" + sn[i] + "&ans[]=" + an[i] + "&pans[]=" + pan[i] + "&denomination[]=" + d[i]; // Record what was sent

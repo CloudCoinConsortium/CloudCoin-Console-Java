@@ -9,39 +9,63 @@ import java.util.ArrayList;
 
 public class Grader {
 
-    
-    public static SimpleLogger logger;
-
     /**
      * Categorizes coins into folders based on their pown results.
      */
-    public static void grade() {
-        ArrayList<CloudCoin> detectedCoins = FileSystem.loadFolderCoins(FileSystem.DetectedFolder);
+    public static int gradeDetectedFolder(String folderPath) {
+        System.out.println("grading " + folderPath + " + " + FileSystem.DetectedPath);
+        ArrayList<CloudCoin> detectedCoins = FileSystem.loadFolderCoins(folderPath + FileSystem.DetectedPath);
 
-        detectedCoins.forEach(Grader::gradeSimple); // Apply Grading to all detected coins at once.
+        // Apply Grading to all detected coins at once.
+        detectedCoins.forEach(detectedCoin -> gradeSimple(detectedCoin, folderPath));
 
         ArrayList<CloudCoin> coinsBank = new ArrayList<>();
         ArrayList<CloudCoin> coinsFracked = new ArrayList<>();
         ArrayList<CloudCoin> coinsCounterfeit = new ArrayList<>();
         ArrayList<CloudCoin> coinsLost = new ArrayList<>();
 
+        System.out.println("moving coins");
         for (CloudCoin coin : detectedCoins) {
-            if (coin.getFolder().equals(FileSystem.BankFolder)) coinsBank.add(coin);
-            else if (coin.getFolder().equals(FileSystem.FrackedFolder)) coinsFracked.add(coin);
-            else if (coin.getFolder().equals(FileSystem.CounterfeitFolder)) coinsCounterfeit.add(coin);
-            else if (coin.getFolder().equals(FileSystem.LostFolder)) coinsLost.add(coin);
+            if (coin.getFolder().equals(folderPath + FileSystem.BankPath)) coinsBank.add(coin);
+            else if (coin.getFolder().equals(folderPath + FileSystem.FrackedPath)) coinsFracked.add(coin);
+            else if (coin.getFolder().equals(folderPath + FileSystem.CounterfeitPath)) coinsCounterfeit.add(coin);
+            else if (coin.getFolder().equals(folderPath + FileSystem.LostPath)) coinsLost.add(coin);
+            else {
+                System.out.println("folder doesn't match anything: " + coin.getFolder());
+            }
+            System.out.println("going to move coin " + coin.getSn() + " to " + coin.getFolder());
         }
 
-        updateLog("Coin Detection finished.");
-        updateLog("Total Passed Coins - " + (coinsBank.size() + coinsFracked.size()) + "");
-        updateLog("Total Failed Coins - " + coinsCounterfeit.size() + "");
-        updateLog("Total Lost Coins - " + coinsLost.size() + "");
+        System.out.println("Coin Detection finished.");
+        System.out.println("Total Passed Coins - " + (coinsBank.size() + coinsFracked.size()) + "");
+        System.out.println("Total Failed Coins - " + coinsCounterfeit.size() + "");
+        System.out.println("Total Lost Coins - " + coinsLost.size() + "");
 
         // Move Coins to their respective folders after sort
-        FileSystem.moveCoins(coinsBank, FileSystem.DetectedFolder, FileSystem.BankFolder);
-        FileSystem.moveCoins(coinsFracked, FileSystem.DetectedFolder, FileSystem.FrackedFolder);
-        FileSystem.moveCoins(coinsCounterfeit, FileSystem.DetectedFolder, FileSystem.CounterfeitFolder);
-        FileSystem.moveCoins(coinsLost, FileSystem.DetectedFolder, FileSystem.LostFolder);
+        FileSystem.moveCoins(coinsBank, folderPath + FileSystem.DetectedPath, folderPath + FileSystem.BankPath);
+        FileSystem.moveCoins(coinsFracked, folderPath + FileSystem.DetectedPath, folderPath + FileSystem.FrackedPath);
+        FileSystem.moveCoins(coinsCounterfeit, folderPath + FileSystem.DetectedPath, folderPath + FileSystem.CounterfeitPath);
+        FileSystem.moveCoins(coinsLost, folderPath + FileSystem.DetectedPath, folderPath + FileSystem.LostPath);
+
+        return coinsBank.size() + coinsFracked.size();
+    }
+
+    /**
+     * Determines the coin's folder based on a simple grading schematic.
+     */
+    public static void gradeSimple(CloudCoin coin, String folderPath) {
+        if (isPassingSimple(coin.getPown())) {
+            if (isFrackedSimple(coin.getPown()))
+                coin.setFolder(folderPath + FileSystem.FrackedPath);
+            else
+                coin.setFolder(folderPath + FileSystem.BankPath);
+        }
+        else {
+            if (isHealthySimple(coin.getPown()))
+                coin.setFolder(folderPath + FileSystem.CounterfeitPath);
+            else
+                coin.setFolder(folderPath + FileSystem.LostPath);
+        }
     }
 
     /**
@@ -91,6 +115,6 @@ public class Grader {
 
     public static void updateLog(String message) {
         System.out.println(message);
-        logger.Info(message);
+        SimpleLogger.Info(message);
     }
 }

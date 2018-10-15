@@ -3,6 +3,7 @@ package com.cloudcore.console.core;
 import com.google.gson.annotations.Expose;
 import com.google.gson.annotations.SerializedName;
 
+import java.io.File;
 import java.util.*;
 
 public class CloudCoin {
@@ -85,4 +86,9 @@ public class CloudCoin {
     public void setPown(String pown) { this.pown = pown; }
     public void setAoid(ArrayList<String> aoid) { this.aoid = aoid; }
     public void setFolder(String folder) { this.folder = folder; }
+    public void setFullFilePath(String fullFilePath) {
+        int separator = fullFilePath.lastIndexOf(File.separatorChar);
+        folder = fullFilePath.substring(0, separator);
+        currentFilename = fullFilePath.substring(separator);
+    }
 }
