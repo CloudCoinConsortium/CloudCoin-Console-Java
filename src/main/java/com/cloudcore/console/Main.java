@@ -188,13 +188,13 @@ public class Main {
         System.out.println(ConsoleColors.BLUE_BACKGROUND +
                 "                                                                  " + ConsoleColors.RESET);
         System.out.println(ConsoleColors.BLUE_BACKGROUND +
-                "   Perfect:         " + bankTotals[0] + "          " + bankTotals[1] + "          " + bankTotals[2] +
-                "          " + bankTotals[3] + "          " + bankTotals[4] + " " + ConsoleColors.RESET);
+                "   Perfect:         " + bankTotals[1] + "          " + bankTotals[2] + "          " + bankTotals[3] +
+                "          " + bankTotals[4] + "          " + bankTotals[5] + " " + ConsoleColors.RESET);
         System.out.println(ConsoleColors.BLUE_BACKGROUND +
                 "                                                                  " + ConsoleColors.RESET);
         System.out.println(ConsoleColors.BLUE_BACKGROUND +
-                "   Fracked:         " + frackedTotals[0] + "          " + frackedTotals[1] + "          " + frackedTotals[2] +
-                "          " + frackedTotals[3] + "          " + frackedTotals[4] + " " + ConsoleColors.RESET);
+                "   Fracked:         " + frackedTotals[1] + "          " + frackedTotals[2] + "          " + frackedTotals[3] +
+                "          " + frackedTotals[4] + "          " + frackedTotals[5] + " " + ConsoleColors.RESET);
         System.out.println(ConsoleColors.BLUE_BACKGROUND +
                 "                                                                  " + ConsoleColors.RESET);
 
@@ -311,37 +311,43 @@ public class Main {
 
         int[] bankTotals = FileUtils.countCoins(accountFolder + FileSystem.BankPath);
         int[] frackedTotals = FileUtils.countCoins(accountFolder + FileSystem.FrackedPath);
-        int[] totals = FileUtils.countCoins(accountFolder);
-        bankTotals[0] += totals[0];
-        bankTotals[1] += totals[1];
-        bankTotals[2] += totals[2];
-        bankTotals[3] += totals[3];
-        bankTotals[4] += totals[4];
-        bankTotals[5] += totals[5];
+        int[] totals = new int[6];
+        totals[0] = bankTotals[0] + frackedTotals[0];
+        totals[1] = bankTotals[1] + frackedTotals[1];
+        totals[2] = bankTotals[2] + frackedTotals[2];
+        totals[3] = bankTotals[3] + frackedTotals[3];
+        totals[4] = bankTotals[4] + frackedTotals[4];
+        totals[5] = bankTotals[5] + frackedTotals[5];
+
+        if (amount > totals[0] || amount <= 0) {
+            response.message = "Request Error: Not enough CloudCoins for export.";
+            System.out.println(response.message);
+            return Utils.createGson().toJson(response);
+        }
 
         int exp_1 = 0;
         int exp_5 = 0;
         int exp_25 = 0;
         int exp_100 = 0;
         int exp_250 = 0;
-        if (amount >= 250 && bankTotals[5] + frackedTotals[5] > 0) {
-            exp_250 = ((amount / 250) < (bankTotals[5] + frackedTotals[5])) ? (amount / 250) : (bankTotals[5] + frackedTotals[5]);
+        if (amount >= 250 && totals[5] > 0) {
+            exp_250 = ((amount / 250) < (totals[5])) ? (amount / 250) : (totals[5]);
             amount -= (exp_250 * 250);
         }
-        if (amount >= 100 && bankTotals[4] + frackedTotals[4] > 0) {
-            exp_100 = ((amount / 100) < (bankTotals[4] + frackedTotals[4])) ? (amount / 100) : (bankTotals[4] + frackedTotals[4]);
+        if (amount >= 100 && totals[4] > 0) {
+            exp_100 = ((amount / 100) < (totals[4])) ? (amount / 100) : (totals[4]);
             amount -= (exp_100 * 100);
         }
-        if (amount >= 25 && bankTotals[3] + frackedTotals[3] > 0) {
-            exp_25 = ((amount / 25) < (bankTotals[3] + frackedTotals[3])) ? (amount / 25) : (bankTotals[3] + frackedTotals[3]);
+        if (amount >= 25 && totals[3] > 0) {
+            exp_25 = ((amount / 25) < (totals[3])) ? (amount / 25) : (totals[3]);
             amount -= (exp_25 * 25);
         }
-        if (amount >= 5 && bankTotals[2] + frackedTotals[2] > 0) {
-            exp_5 = ((amount / 5) < (bankTotals[2] + frackedTotals[2])) ? (amount / 5) : (bankTotals[2] + frackedTotals[2]);
+        if (amount >= 5 && totals[2] > 0) {
+            exp_5 = ((amount / 5) < (totals[2])) ? (amount / 5) : (totals[2]);
             amount -= (exp_5 * 5);
         }
-        if (amount >= 1 && bankTotals[1] + frackedTotals[1] > 0) {
-            exp_1 = (amount < (bankTotals[1] + frackedTotals[1])) ? amount : (bankTotals[1] + frackedTotals[1]);
+        if (amount >= 1 && totals[1] > 0) {
+            exp_1 = (amount < (totals[1])) ? amount : (totals[1]);
             amount -= (exp_1);
         }
 
@@ -349,7 +355,6 @@ public class Main {
         int totalSaved = exp_1 + (exp_5 * 5) + (exp_25 * 25) + (exp_100 * 100) + (exp_250 * 250);
         ArrayList<CloudCoin> totalCoins = FileSystem.loadFolderCoins(accountFolder + FileSystem.BankPath);
         totalCoins.addAll(FileSystem.loadFolderCoins(accountFolder + FileSystem.FrackedPath));
-        totalCoins.addAll(FileSystem.loadFolderCoins(accountFolder));
 
         ArrayList<CloudCoin> onesToExport = new ArrayList<>();
         ArrayList<CloudCoin> fivesToExport = new ArrayList<>();
